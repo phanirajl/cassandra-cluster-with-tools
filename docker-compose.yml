@@ -1,0 +1,203 @@
+version: '2'
+
+################################################
+# adjacents docker-compose file for cassandra + PMM
+# updated May 2018
+# author: Valerie Parham-Thompson
+
+services:
+
+################################################
+# operations server; run commands here
+    app:
+        container_name: app
+        image: dataindataout/opscassie
+        hostname: app
+        networks:
+          myring:
+            ipv4_address: 172.16.238.10
+        volumes:
+            - ./configuration/id_rsa:/root/.ssh/id_rsa
+            - ./configuration/medusa.ini:/etc/medusa/medusa.ini
+            - ./configure-app.sh:/usr/local/bin/configure-app.sh
+        command: tail -f /dev/null
+
+################################################
+# servers to run a Cassandra cluster on
+# the "CASSANDRA*" variables will get pulled in via docker-entrypoint.sh
+
+    DC1C1:
+        container_name: DC1C1
+        image: dataindataout/cassie
+        hostname: DC1C1
+        networks: 
+            - myring
+        volumes:
+            - ./n1data:/var/lib/cassandra
+            - ./configuration/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
+            - ./configuration/id_rsa.pub:/root/.ssh/id_rsa.pub
+            - ./configuration/medusa.ini:/etc/medusa/medusa.ini
+            - ./cassandra-prometheus-2.0.0-jar-with-dependencies.jar:/usr/local/cassandra-prometheus-2.0.0-jar-with-dependencies.jar
+            - ./configure-client.sh:/usr/local/bin/configure-client.sh
+        ports:
+          - "127.0.0.1:7401:7400"
+          - "127.0.0.1:22:22"
+        environment:
+            - CASSANDRA_SEEDS=DC1C1,DC1C2,DC2C1,DC2C2
+            - CASSANDRA_CLUSTER_NAME=Dev_Cluster
+            - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+            - CASSANDRA_DC=DC1
+            - CASSANDRA_RACK=RAC1
+        ulimits:
+            memlock: -1
+            nproc: 32768
+            nofile: 100000
+        command: bash -c 'sleep 10;  /docker-entrypoint.sh cassandra -f'
+
+    DC1C2:
+        container_name: DC1C2
+        image: dataindataout/cassie
+        hostname: DC1C2
+        networks:
+            - myring
+        volumes:
+            - ./n2data:/var/lib/cassandra
+            - ./configuration/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
+            - ./configuration/id_rsa.pub:/root/.ssh/id_rsa.pub
+            - ./configuration/medusa.ini:/etc/medusa/medusa.ini
+            - ./cassandra-prometheus-2.0.0-jar-with-dependencies.jar:/usr/local/cassandra-prometheus-2.0.0-jar-with-dependencies.jar
+            - ./configure-client.sh:/usr/local/bin/configure-client.sh
+        ports:
+          - "127.0.0.1:7402:7400"
+        environment:
+            - CASSANDRA_SEEDS=DC1C1,DC1C2,DC2C1,DC2C2
+            - CASSANDRA_CLUSTER_NAME=Dev_Cluster
+            - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+            - CASSANDRA_DC=DC1
+            - CASSANDRA_RACK=RAC2
+        depends_on:
+              - DC1C1
+        ulimits:
+            memlock: -1
+            nproc: 32768
+            nofile: 100000
+        command: bash -c 'sleep 10;  /docker-entrypoint.sh cassandra -f'
+
+    DC1C3:
+        container_name: DC1C3
+        image: dataindataout/cassie
+        hostname: DC1C3
+        networks: 
+            - myring
+        volumes:
+            - ./n3data:/var/lib/cassandra
+            - ./configuration/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
+            - ./configuration/id_rsa.pub:/root/.ssh/id_rsa.pub
+            - ./configuration/medusa.ini:/etc/medusa/medusa.ini
+            - ./cassandra-prometheus-2.0.0-jar-with-dependencies.jar:/usr/local/cassandra-prometheus-2.0.0-jar-with-dependencies.jar
+            - ./configure-client.sh:/usr/local/bin/configure-client.sh
+        ports:
+          - "127.0.0.1:7403:7400"
+        environment:
+            - CASSANDRA_SEEDS=DC1C1,DC1C2,DC2C1,DC2C2
+            - CASSANDRA_CLUSTER_NAME=Dev_Cluster
+            - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+            - CASSANDRA_DC=DC1
+            - CASSANDRA_RACK=RAC3
+        depends_on:
+              - DC1C1
+        ulimits:
+            memlock: -1
+            nproc: 32768
+            nofile: 100000
+        command: bash -c 'sleep 10;  /docker-entrypoint.sh cassandra -f'
+
+    # DC2C1:
+    #     container_name: DC2C1
+    #     image: cassandra:latest
+    #     hostname: DC2C1
+    #     networks: 
+    #         - myring
+    #     volumes:
+    #         - ./n4data:/var/lib/cassandra
+    #         - ./configuration/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
+    #         - ./cassandra-prometheus-2.0.0-jar-with-dependencies.jar:/usr/local/cassandra-prometheus-2.0.0-jar-with-dependencies.jar
+    #         - ./configure-pmm-client.sh:/usr/local/bin/configure-pmm-client.sh
+    #     ports:
+    #       - "127.0.0.1:7404:7400"
+    #     environment:
+    #         - CASSANDRA_SEEDS=DC1C1,DC1C2,DC2C1,DC2C2
+    #         - CASSANDRA_CLUSTER_NAME=Dev_Cluster
+    #         - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+    #         - CASSANDRA_DC=DC2
+    #         - CASSANDRA_RACK=RAC1
+    #     ulimits:
+    #         memlock: -1
+    #         nproc: 32768
+    #         nofile: 100000
+    #     command: bash -c 'sleep 10;  /docker-entrypoint.sh cassandra -f'
+
+    # DC2C2:
+    #     container_name: DC2C2
+    #     image: cassandra:latest
+    #     hostname: DC2C2
+    #     networks:
+    #         - myring
+    #     volumes:
+    #         - ./n5data:/var/lib/cassandra
+    #         - ./configuration/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
+    #         - ./cassandra-prometheus-2.0.0-jar-with-dependencies.jar:/usr/local/cassandra-prometheus-2.0.0-jar-with-dependencies.jar
+    #         - ./configure-pmm-client.sh:/usr/local/bin/configure-pmm-client.sh
+    #     ports:
+    #       - "127.0.0.1:7405:7400"
+    #     environment:
+    #         - CASSANDRA_SEEDS=DC1C1,DC1C2,DC2C1,DC2C2
+    #         - CASSANDRA_CLUSTER_NAME=Dev_Cluster
+    #         - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+    #         - CASSANDRA_DC=DC2
+    #         - CASSANDRA_RACK=RAC2
+    #     depends_on:
+    #           - DC1C1
+    #     ulimits:
+    #         memlock: -1
+    #         nproc: 32768
+    #         nofile: 100000
+    #     command: bash -c 'sleep 10;  /docker-entrypoint.sh cassandra -f'
+
+    # DC2C3:
+    #     container_name: DC2C3
+    #     image: cassandra:latest
+    #     hostname: DC2C3
+    #     networks: 
+    #         - myring
+    #     volumes:
+    #         - ./n6data:/var/lib/cassandra
+    #         - ./configuration/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
+    #         - ./cassandra-prometheus-2.0.0-jar-with-dependencies.jar:/usr/local/cassandra-prometheus-2.0.0-jar-with-dependencies.jar
+    #         - ./configure-pmm-client.sh:/usr/local/bin/configure-pmm-client.sh
+    #     ports:
+    #       - "127.0.0.1:7406:7400"
+    #     environment:
+    #         - CASSANDRA_SEEDS=DC1C1,DC1C2,DC2C1,DC2C2
+    #         - CASSANDRA_CLUSTER_NAME=Dev_Cluster
+    #         - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+    #         - CASSANDRA_DC=DC2
+    #         - CASSANDRA_RACK=RAC3
+    #     depends_on:
+    #           - DC1C1
+    #     ulimits:
+    #         memlock: -1
+    #         nproc: 32768
+    #         nofile: 100000
+    #     command: bash -c 'sleep 10;  /docker-entrypoint.sh cassandra -f'
+
+########################################################
+# network
+
+networks:
+    myring:    
+        driver: bridge
+        ipam:
+          driver: default
+          config:
+          - subnet: 172.16.238.0/24
