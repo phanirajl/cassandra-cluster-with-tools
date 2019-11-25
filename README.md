@@ -17,7 +17,9 @@ On the app node:
 
 # testing cstar
 
+```
 cstar run --command='touch /root/testfile' --seed-host=172.16.238.2
+```
 
 # testing medusa
 
