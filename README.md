@@ -1,4 +1,4 @@
-# cassandra-medusa
+# A Cassandra cluster with tools
 cassandra, cstar, and medusa
 
 This is not a production setup, by any means. This is a test environment to be used for experiments on cassandra, cstar, and medusa. Also, ssh keys between containers are an anti-pattern, and are used here only as a convenience.
