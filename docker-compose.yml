@@ -33,6 +33,7 @@ services:
         networks: 
             - myring
         volumes:
+            - ./backups:/home/testbackup20191124
             - ./n1data:/var/lib/cassandra
             - ./configuration/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
             - ./configuration/id_rsa.pub:/root/.ssh/id_rsa.pub
@@ -61,6 +62,7 @@ services:
         networks:
             - myring
         volumes:
+            - ./backups:/home/testbackup20191124
             - ./n2data:/var/lib/cassandra
             - ./configuration/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
             - ./configuration/id_rsa.pub:/root/.ssh/id_rsa.pub
@@ -90,6 +92,7 @@ services:
         networks: 
             - myring
         volumes:
+            - ./backups:/home/testbackup20191124
             - ./n3data:/var/lib/cassandra
             - ./configuration/cassandra-env.sh:/etc/cassandra/cassandra-env.sh
             - ./configuration/id_rsa.pub:/root/.ssh/id_rsa.pub

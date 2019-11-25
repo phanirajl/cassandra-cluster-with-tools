@@ -1,6 +1,10 @@
 # A Cassandra cluster with tools
 cassandra, cstar, and medusa
 
+TODO: 
+- mount shared backup folder to app container and test restore
+- add /etc/hosts automatically
+
 This is not a production setup, by any means. This is a test environment to be used for experiments on cassandra, cstar, and medusa. Also, ssh keys between containers are an anti-pattern, and are used here only as a convenience.
 
 `docker-compose up -d`
@@ -9,17 +13,21 @@ The following will set up those anti-pattern ssh keys:
 
 On the Cassandra nodes:
 
-`/usr/local/bin/configure-client.sh`
+`./usr/local/bin/configure-client.sh`
 
 On the app node:
 
-`/usr/local/bin/configure-app.sh`
+`./usr/local/bin/configure-app.sh`
 
 # testing cstar
 
 ```
 cstar run --command='touch /root/testfile' --seed-host=172.16.238.2
 ```
+
+# fix /etc/hosts
+
+Make sure the nodes all have /etc/hosts set with IPs and hostnames. Backups are detected by hostname, and each node (including the app container) will have to find the other nodes.
 
 # testing medusa
 
